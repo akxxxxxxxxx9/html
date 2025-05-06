@@ -184,6 +184,58 @@ h1 {
     gap: 10px;
 }
 /* 笔记卡片样式 */
+.note.fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    z-index: 2000 !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.2) !important;
+    overflow: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 40px 20px 20px 20px !important;
+}
+.note.fullscreen .note-title {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+.note.fullscreen .note-summary {
+    display: none !important;
+}
+.note.fullscreen .note-content {
+    display: block !important;
+    font-size: 1.1em;
+    max-height: none !important;
+    flex: 1 1 auto;
+    margin-bottom: 20px;
+}
+.note.fullscreen .note-buttons {
+    margin-top: auto;
+    justify-content: flex-end;
+    padding-bottom: 10px;
+    background: none;
+    position: static;
+    width: 100%;
+    box-sizing: border-box;
+}
+@media (max-width: 700px) {
+    .note.fullscreen .note-buttons {
+        padding-bottom: 4vw;
+    }
+}
+@media (max-width: 700px) {
+    .note.fullscreen {
+        padding: 10px 2vw 10px 2vw !important;
+    }
+}
+
 .note {
     position: relative;
     background-color: rgba(214, 241, 173, 0.93);
@@ -195,58 +247,6 @@ h1 {
     min-width: 500px; /* 最小宽度，避免过窄 */
     max-width: 700px; /* 最大宽度，避免过宽 */
     height: auto;
-    z-index: 1;
-}
-
-.note.fullscreen {
-    position: fixed !important;
-    top: 0;
-    left: 0;
-    width: 100vw !important;
-    min-width: 0 !important;
-    max-width: 100vw !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    z-index: 2000 !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.35);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    background: rgba(214, 241, 173, 0.99);
-    overflow: auto;
-}
-
-.note.fullscreen .note-title {
-    font-size: 2em;
-    margin-top: 40px;
-    text-align: center;
-}
-
-.note.fullscreen .note-summary {
-    display: none !important;
-}
-
-.note.fullscreen .note-content {
-    display: block !important;
-    font-size: 1.2em;
-    max-height: 70vh;
-    margin: 20px 0;
-    width: 90%;
-    overflow-y: auto;
-}
-
-.note.fullscreen .note-buttons {
-    justify-content: center;
-    margin-bottom: 30px;
-}
-
-/* 全屏按钮高亮 */
-.fullscreen-btn {
-    background-color: #ff9800;
-    color: #fff;
 }
 .note:hover {
     transform: translateY(-5px); /* 悬停时上移 */
@@ -477,6 +477,18 @@ h1 {
 .customization-controls label {
     margin-right: 5px;
 }
+.footer-icon img {
+    filter: grayscale(50%);
+    transition: filter 0.2s, transform 0.2s;
+}
+.footer-icon:hover img {
+    filter: grayscale(0%);
+    transform: scale(1.15);
+}
+#footer {
+    user-select: none;
+}
+<script src="https://cdn.jsdelivr.net/gh/yuyinws/sakura/sakura.js"></script>
 </style>
 </head>
 <body>
@@ -655,6 +667,8 @@ function createNoteCard(note, container) {
     const card = document.createElement('div');
     card.className = 'note';
     card.dataset.id = note.id; // 存储笔记ID
+    // 渲染自定义颜色
+    if (note.color) card.style.backgroundColor = note.color;
     // 笔记标题
     const title = document.createElement('div');
     title.className = 'note-title';
@@ -681,23 +695,6 @@ function createNoteCard(note, container) {
         card.classList.toggle('expanded');
         toggleBtn.textContent = card.classList.contains('expanded') ? '收起' : '展开';
     };
-    // 全屏按钮
-    const fullscreenBtn = document.createElement('button');
-    fullscreenBtn.className = 'note-btn fullscreen-btn';
-    fullscreenBtn.textContent = '全屏';
-    fullscreenBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (!card.classList.contains('fullscreen')) {
-            card.classList.add('fullscreen');
-            fullscreenBtn.textContent = '退出全屏';
-            // 禁止页面滚动
-            document.body.style.overflow = 'hidden';
-        } else {
-            card.classList.remove('fullscreen');
-            fullscreenBtn.textContent = '全屏';
-            document.body.style.overflow = '';
-        }
-    };
     // 复制按钮：复制 Markdown 渲染后的纯文本内容
     const copyBtn = document.createElement('button');
     copyBtn.className = 'note-btn';
@@ -707,8 +704,59 @@ function createNoteCard(note, container) {
         navigator.clipboard.writeText(renderedContent).then(() => alert('渲染后的笔记内容已复制'));
     };
     buttons.appendChild(toggleBtn);
-    buttons.appendChild(fullscreenBtn);
     buttons.appendChild(copyBtn);
+    // 全屏按钮
+    const fullscreenBtn = document.createElement('button');
+    fullscreenBtn.className = 'note-btn fullscreen-btn';
+    fullscreenBtn.textContent = '全屏';
+    fullscreenBtn.onclick = (e) => {
+        e.stopPropagation();
+        const isFullscreen = card.classList.toggle('fullscreen');
+        fullscreenBtn.textContent = isFullscreen ? '关闭全屏' : '全屏';
+        document.body.style.overflow = isFullscreen ? 'hidden' : '';
+    };
+    // 全屏状态下双击卡片退出全屏
+    card.addEventListener('dblclick', function(e) {
+        if (card.classList.contains('fullscreen')) {
+            card.classList.remove('fullscreen');
+            fullscreenBtn.textContent = '全屏';
+            document.body.style.overflow = '';
+        }
+    });
+    buttons.appendChild(fullscreenBtn);
+    // 管理员模式下添加颜色自定义
+    if (isAdmin) {
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.className = 'note-color-input';
+        // 默认色：若之前自定义过则读取，否则用当前背景色
+        colorInput.value = card.dataset.bgcolor || rgb2hex(card.style.backgroundColor || getComputedStyle(card).backgroundColor || '#d6f1ad');
+        colorInput.title = '自定义卡片颜色';
+        colorInput.oninput = function(e) {
+            card.style.backgroundColor = colorInput.value;
+            card.dataset.bgcolor = colorInput.value;
+            // 写入note.color并保存
+            note.color = colorInput.value;
+            saveNotes();
+        };
+        // 右侧紧凑显示
+        colorInput.style.marginLeft = '8px';
+        colorInput.style.width = '28px';
+        colorInput.style.height = '28px';
+        colorInput.style.verticalAlign = 'middle';
+        colorInput.style.border = 'none';
+        colorInput.style.background = 'none';
+        buttons.appendChild(colorInput);
+    }
+
+    // 工具函数：rgb转hex
+    function rgb2hex(rgb) {
+        if (!rgb) return '#d6f1ad';
+        if (rgb.startsWith('#')) return rgb;
+        const result = rgb.match(/\d+/g);
+        if (!result) return '#d6f1ad';
+        return '#' + result.slice(0,3).map(x => ('0'+parseInt(x).toString(16)).slice(-2)).join('');
+    }
     // 管理员模式下添加编辑和删除按钮
     if (isAdmin) {
         // 私密/公开切换按钮
@@ -746,8 +794,6 @@ function createNoteCard(note, container) {
     card.ondblclick = function(e) {
         // 避免双击按钮时误触
         if (e.target.closest('.note-btn')) return;
-        // 若处于全屏状态，双击无效
-        if (card.classList.contains('fullscreen')) return;
         card.classList.toggle('expanded');
         // 同步按钮文本
         const toggleBtn = card.querySelector('.note-btn');
@@ -760,6 +806,8 @@ function createNoteCard(note, container) {
         card.style.color = '#ffffff';
         card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.5)';
     }
+    // 确保按钮组被添加到卡片底部
+    card.appendChild(buttons);
     container.appendChild(card);
 }
 // 更新分类勾选框
@@ -855,11 +903,17 @@ function saveNote() {
         if (existingIndex !== -1 && typeof notes[existingIndex].isPrivate === 'boolean') {
             isPrivate = notes[existingIndex].isPrivate;
         }
+        // 若编辑时原有color字段，保留
+        let color = '';
+        if (existingIndex !== -1 && notes[existingIndex].color) color = notes[existingIndex].color;
         const note = { id, title, content, categories: selectedCategories.slice(), isPrivate };
+        if (color) note.color = color;
         // 其余逻辑不变
         if (existingIndex !== -1) {
             // 编辑现有笔记
             notes[existingIndex] = note;
+            // 保持颜色（如果页面上有自定义）
+            if (notes[existingIndex].color) note.color = notes[existingIndex].color;
             Object.keys(categories).forEach(category => {
                 categories[category] = categories[category].filter(n => n.id !== id);
                 if (selectedCategories.includes(category)) {
@@ -963,13 +1017,60 @@ async function verifyPassword(inputPassword) {
     const result = await response.json();
     return result.valid;
 }
+// 启动樱花飘落
+if (typeof Sakura === 'function') {
+    new Sakura('body', {
+        // 可自定义参数
+        blowAnimations: ['blow-soft-left','blow-medium-left','blow-soft-right','blow-medium-right'],
+        className: 'sakura',
+        fallSpeed: 1.2,
+        maxSize: 14,
+        minSize: 9,
+        newOn: 400,
+        swayAnimations: ['sway-0','sway-1','sway-2','sway-3','sway-4','sway-5','sway-6','sway-7','sway-8']
+    });
+}
 // 初始化页面
 loadNotes();
 </script>
+<footer id="footer" style="width:100%;text-align:center;padding:24px 0 12px 0; background:rgba(0,0,0,0.04);margin-top:40px;">
+  <div style="margin-bottom:8px;">
+    <a href="https://youtube.com/你的频道" target="_blank" title="YouTube" class="footer-icon">
+      <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/youtube.svg" alt="YouTube" style="width:28px;height:28px;margin:0 10px;vertical-align:middle;">
+    </a>
+    <a href="https://x.com/你的账号" target="_blank" title="X" class="footer-icon">
+      <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/x.svg" alt="X" style="width:28px;height:28px;margin:0 10px;vertical-align:middle;">
+    </a>
+    <a href="https://discord.com/你的账号" target="_blank" title="discord" class="footer-icon">
+      <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/discord.svg" alt="discord" style="width:28px;height:28px;margin:0 10px;vertical-align:middle;">
+    </a>
+    <a href="https://instagram.com/你的账号" target="_blank" title="Instagram" class="footer-icon">
+      <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" alt="Instagram" style="width:28px;height:28px;margin:0 10px;vertical-align:middle;">
+    </a>
+    <a href="https://github.com/akxxxxxxxxx9" target="_blank" title="GitHub" class="footer-icon">
+      <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/github.svg" alt="GitHub" style="width:28px;height:28px;margin:0 10px;vertical-align:middle;">
+    </a>
+    <a href="https://web.telegram.org/你的账号" target="_blank" title="telegram" class="footer-icon">
+      <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/telegram.svg" alt="telegram" style="width:28px;height:28px;margin:0 10px;vertical-align:middle;">
+    </a>
+  </div>
+  <div style="margin-top:10px;font-size:15px;color:#555;">
+    团队成员：SUOU AKI
+  </div>
+  <div style="margin-top:8px;font-size:13px;color:#aaa;">
+    &copy; 2025 AKI | Powered by Cloudflare Workers
+  </div>
+</footer>
 </body>
 </html>`;
 
 // Cloudflare Worker 处理请求
+  /**
+   *  Cloudflare Worker 处理 HTTP 请求
+   *  @param {Request} request HTTP 请求对象
+   *  @param {Object} env  Cloudflare Worker 的环境变量
+   *  @return {Promise<Response>}  HTTP 响应对象
+   */
 export default {
     // 处理 HTTP 请求
     async fetch(request, env) {
